@@ -1,0 +1,15 @@
+settings:
+  max_persons: 100
+  export_path: "data/export_linkedin.xlsx"
+  headless: false  # Pour voir le navigateur
+
+filters:
+  keywords:
+    - "Directeur Innovation"
+    - "CTO"
+    - "Product Manager"
+    - "Responsable R&D"
+
+delays:
+  min_wait: 1
+  max_wait: 3

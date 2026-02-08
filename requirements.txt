@@ -1,0 +1,6 @@
+playwright
+PyQt6
+pandas
+openpyxl
+pyyaml
+qasync

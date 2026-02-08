@@ -16,6 +16,46 @@ Le principe est d'assister l'utilisateur dans un workflow de prospection :
 4.  **Exploration (Relations)** : L'utilisateur peut récupérer les "personnes associées" (relations suggérées par LinkedIn) pour alimenter sa file d'attente.
 5.  **Pilotage** : Un tableau de bord permet de suivre l'état de la liste (A traiter, En cours, Traité).
 
+## ✨ Dernières Évolutions
+
+- **Enrichissement Automatique** : Complétion intelligente des profils manquants (titre, société) lors de la navigation.
+- **Gestion Avancée des Relations** : Importation directe des suggestions ("personnes associées") via une modale dédiée.
+- **Architecture Asynchrone** : Fluidité totale de l'interface grâce à `qasync` et les opérations non-bloquantes (éviter le gel de l'UI pendant le scraping).
+
+## 🚀 Installation et Démarrage
+
+### Pré-requis
+- **Python 3.10** ou supérieur.
+- Un compte LinkedIn valide.
+
+### Installation
+1. **Cloner le projet** :
+   ```bash
+   git clone https://github.com/lpuigo/LinkedinExplorer.git
+   cd LinkedinExplorer
+   ```
+
+2. **Créer un environnement virtuel** :
+   ```bash
+   python -m venv .venv
+   # Windows
+   . .venv\Scripts\activate
+   # Mac/Linux
+   source .venv/bin/activate
+   ```
+
+3. **Installer les dépendances** :
+   ```bash
+   pip install -r requirements.txt
+   playwright install
+   ```
+
+### Lancement
+```bash
+python main.py
+```
+Lors du premier lancement, connectez-vous manuellement à LinkedIn dans la fenêtre qui s'ouvre. L'application prendra ensuite le relais une fois sur le fil d'actualité.
+
 ## 🏗 Architecture Technique
 
 Le projet respecte les principes du **Clean Code** et une architecture en couches pour garantir maintenabilité et évolutivité.
@@ -29,13 +69,14 @@ app/
 │   └── repository.py   # Interfaces (Port) pour l'accès aux données
 ├── infra/          # Implémentation technique (Adapters)
 │   └── storage/        # Persistence (ExcelRepository avec Pandas/Openpyxl)
+│       └── excel_storage.py
 ├── scraper/        # Couche d'acquisition (Playwright)
 │   ├── browser.py      # Contrôle du navigateur
 │   └── parsers.py      # Extraction du DOM
-├── gui/            # Interface Utilisateur (PyQt6)
-│   ├── main_window.py  # Fenêtre principale (Master/Detail)
-│   └── dialogs.py      # Dialogues (Ajout, Suggestions)
-└── utils/          # Utilitaires transverses
+└── gui/            # Interface Utilisateur (PyQt6)
+    ├── main_window.py              # Fenêtre principale (Master/Detail)
+    ├── dialogs.py                  # Dialogue d'ajout manuel
+    └── dialog_suggestion_validate.py # Dialogue de gestion des suggestions
 ```
 
 ### Composants Clés
@@ -60,3 +101,20 @@ Les tests vérifient :
 - **Dédoublonnage** : Impossible d'ajouter deux fois la même URL.
 - **Persistence** : Vérification que seuls les profils "Intéressants" déclenchent une sauvegarde.
 - **Mise à jour** : Propagation des données extraites vers le modèle métier.
+
+## 🤝 Contributions
+
+Les contributions sont les bienvenues ! Pour proposer des changements :
+1. Forkez le projet.
+2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`).
+3. Committez vos changements (`git commit -m 'Add some AmazingFeature'`).
+4. Pushez la branche (`git push origin feature/AmazingFeature`).
+5. Ouvrez une Pull Request.
+
+### Gestion des dépendances
+Si vous ajoutez de nouvelles bibliothèques au projet, veuillez mettre à jour le fichier `requirements.txt`.
+Vous pouvez le faire manuellement en ajoutant le nom du package, ou en utilisant `pip freeze` si vous souhaitez figer les versions :
+
+```bash
+pip freeze > requirements.txt
+```

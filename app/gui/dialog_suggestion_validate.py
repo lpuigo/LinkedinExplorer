@@ -43,10 +43,13 @@ class SuggestionsDialog(QDialog):
         self.table = QTableWidget()
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Nom", "Titre", "A Analyser"])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(0, 400)
+        
+        # Permettre à l'utilisateur de modifier la largeur des colonnes
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.table.horizontalHeader().setStretchLastSection(False) # On évite stretch auto pour laisser la main
+        
+        self.table.setColumnWidth(0, 200)
+        self.table.setColumnWidth(1, 400) # Largeur par défaut pour le titre
         self.table.setColumnWidth(2, 100)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         

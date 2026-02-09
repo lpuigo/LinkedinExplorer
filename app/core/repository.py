@@ -13,3 +13,8 @@ class PersonRepository(ABC):
     def save_person(self, person: Personne) -> None:
         """Sauvegarde ou met à jour une personne."""
         pass
+
+    @abstractmethod
+    def remove_person(self, person: Personne) -> None:
+        """Supprime une personne du stockage."""
+        pass

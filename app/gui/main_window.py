@@ -7,7 +7,7 @@ from PyQt6.QtGui import QColor, QBrush, QFont
 
 from app.gui.dialogs import AddProfileDialog
 from app.core.services import WorkflowManager
-from app.core.models import PersonStatus, Personne
+from app.core.models import Personne
 import qasync
 import asyncio
 from app.gui.dialog_suggestion_validate import SuggestionsDialog
@@ -140,15 +140,15 @@ class MainWindow(QMainWindow):
             text_color = Qt.GlobalColor.black
             font = QFont()
 
-            # Gestion des couleurs par statut (persistant)
-            if p.statut == PersonStatus.A_TRAITER:
+            # Gestion des couleurs par état (analysed / interesting)
+            if p.analyzed:
+                if p.interesting:
+                    color = QColor("#D1E7DD") # Vert clair
+                else:
+                    color = QColor("#F0F0F0") # Gris clair
+                    text_color = QColor("gray")
+            else:
                 color = Qt.GlobalColor.white
-            # EN_COURS retiré car non persistant
-            elif p.statut == PersonStatus.ANALYSE_INTERRESSANT:
-                color = QColor("#D1E7DD") # Vert clair
-            elif p.statut == PersonStatus.ANALYSE_NON_INTERRESSANT:
-                color = QColor("#F8D7DA") # Rouge clair (gris demandé, mais plus clair ici)
-                text_color = QColor("gray")
 
             # Gestion de la mise en avant de la personne courante (UI state)
             if p == current_p:
@@ -213,6 +213,10 @@ class MainWindow(QMainWindow):
 
     def _select_person(self, person: Personne):
         """Sélectionne une personne, met à jour l'UI et lance le traitement background."""
+        # Quand une personne devient active, elle est considérée comme analysée
+        if not person.analyzed:
+            person.analyzed = True
+            
         if person != self.workflow.current_person:
              self.workflow.current_person = person
              self._update_detail_view()

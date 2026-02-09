@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 from typing import List
-from app.core.models import Personne, PersonStatus
+from app.core.models import Personne
 from app.core.repository import PersonRepository
 
 class ExcelRepository(PersonRepository):
@@ -45,7 +45,8 @@ class ExcelRepository(PersonRepository):
                         societe=row.get("Société") if pd.notna(row.get("Société")) else None,
                         lieu=row.get("Région") if pd.notna(row.get("Région")) else None,
                         source_url=row.get("Source") if pd.notna(row.get("Source")) else None,
-                        statut=PersonStatus.ANALYSE_INTERRESSANT # Par défaut, ceux dans le fichier sont intéressants
+                        analyzed=True,
+                        interesting=True
                     )
                     persons.append(p)
                 except Exception as e:
@@ -95,3 +96,16 @@ class ExcelRepository(PersonRepository):
         except Exception as e:
             print(f"Erreur sauvegarde Excel: {e}")
             # Fallback ou raise selon besoin
+
+    def remove_person(self, p: Personne) -> None:
+        """Supprime une personne du fichier Excel."""
+        if not os.path.exists(self.file_path):
+            return
+
+        try:
+            df = pd.read_excel(self.file_path)
+            if p.url in df["Lien Linkedin"].values:
+                df = df[df["Lien Linkedin"] != p.url]
+                df.to_excel(self.file_path, index=False)
+        except Exception as e:
+            print(f"Erreur suppression Excel: {e}")

@@ -5,10 +5,15 @@ settings:
 
 filters:
   keywords:
-    - "Directeur Innovation"
+    - "Directeur"
     - "CTO"
-    - "Product Manager"
-    - "Responsable R&D"
+    - "CIO"
+    - "Manager"
+    - "Responsable"
+    - "Chef"
+    - "VP"
+    - "Head"
+    - "Lead"
 
 delays:
   min_wait: 1

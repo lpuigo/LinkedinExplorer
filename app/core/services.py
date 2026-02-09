@@ -1,6 +1,6 @@
 from collections import deque
 from typing import List, Optional, Dict
-from app.core.models import Personne, PersonStatus
+from app.core.models import Personne
 from app.core.repository import PersonRepository
 
 class WorkflowManager:
@@ -15,8 +15,10 @@ class WorkflowManager:
         """Charge les données depuis le repo et initialise l'état."""
         loaded_persons = self.repository.load_existing_persons()
         for p in loaded_persons:
+            p.analyzed = True
+            p.interesting = True
             self.all_persons[p.url] = p
-            # Ils sont déjà ANLYSE_INTERRESSANT, donc pas dans la queue A_TRAITER
+            # Ils sont déjà intéressants, donc pas dans la queue A_TRAITER
             # Mais on les garde dans le cache pour affichage et dédoublonnage
 
     def add_person(self, url: str, source_url: Optional[str] = None, 
@@ -39,7 +41,8 @@ class WorkflowManager:
             source_url=source_url,
             nom=nom,
             titre=titre,
-            statut=PersonStatus.A_TRAITER
+            analyzed=False,
+            interesting=False
         )
         self.all_persons[clean_url] = p
         self.queue.append(p)
@@ -51,7 +54,7 @@ class WorkflowManager:
             return None
         
         self.current_person = self.queue.popleft()
-        # self.current_person.statut = PersonStatus.EN_COURS # On ne change pas le statut ici
+        # self.current_person.analyzed = True # On pourrait marquer analysé ici ?
         return self.current_person
 
     def set_current_person_decision(self, is_interesting: bool):
@@ -59,13 +62,13 @@ class WorkflowManager:
         if not self.current_person:
             return
 
+        self.current_person.analyzed = True
+        self.current_person.interesting = is_interesting
+        
         if is_interesting:
-            self.current_person.statut = PersonStatus.ANALYSE_INTERRESSANT
             self.repository.save_person(self.current_person)
         else:
-            self.current_person.statut = PersonStatus.ANALYSE_NON_INTERRESSANT
-            # On ne sauvegarde pas dans le repo (Excel) les non-intéressants selon la spec,
-            # mais on garde l'état en mémoire pour le tableau de gauche.
+            self.repository.remove_person(self.current_person)
 
     def update_current_person_info(self, info: dict):
         """Met à jour les infos de la personne courante après scraping."""

@@ -64,7 +64,7 @@ Le projet respecte les principes du **Clean Code** et une architecture en couche
 ```
 app/
 ├── core/           # Cœur Métier (Indépendant des frameworks externes)
-│   ├── models.py       # Modèles de données (Personne, PersonStatus)
+│   ├── models.py       # Modèles de données (Personne)
 │   ├── services.py     # Logique métier (WorkflowManager)
 │   └── repository.py   # Interfaces (Port) pour l'accès aux données
 ├── infra/          # Implémentation technique (Adapters)

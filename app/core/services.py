@@ -8,7 +8,6 @@ class WorkflowManager:
     def __init__(self, repository: PersonRepository):
         self.repository = repository
         self.all_persons: Dict[str, Personne] = {} # URL -> Personne (cache global)
-        self.queue: deque = deque() # File d'attente des "A_TRAITER"
         self.current_person: Optional[Personne] = None
 
     def load_initial_data(self):
@@ -45,7 +44,6 @@ class WorkflowManager:
             interesting=False
         )
         self.all_persons[clean_url] = p
-        self.queue.append(p)
         return p
 
     def get_next_person(self) -> Optional[Personne]:

@@ -2,6 +2,7 @@ settings:
   max_persons: 100
   export_path: "data/export_linkedin.xlsx"
   headless: false  # Pour voir le navigateur
+  mock: true      # Utiliser des mocks au lieu de Playwright
 
 filters:
   keywords:

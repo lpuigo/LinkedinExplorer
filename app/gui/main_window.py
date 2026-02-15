@@ -12,14 +12,14 @@ import qasync
 import asyncio
 from app.gui.dialog_suggestion_validate import SuggestionsDialog
 
+from app.core.browser_service import BrowserService
+
 class MainWindow(QMainWindow):
     """Fenêtre principale combinant le tableau de bord et le navigateur de profils."""
-    def __init__(self, workflow: WorkflowManager, browser: Any,
-                 parser: Any, config: Dict[str, Any]) -> None:
+    def __init__(self, workflow: WorkflowManager, browser: BrowserService, config: Dict[str, Any]) -> None:
         super().__init__()
         self.workflow = workflow
         self.browser = browser
-        self.parser = parser
         self.config = config
         self._init_ui()
         self.refresh_table()
@@ -263,12 +263,8 @@ class MainWindow(QMainWindow):
     async def _process_profile_background(self, p: Personne):
         """Charge la page et le profil en arrière-plan."""
         try:
-            await self.browser.go_to_profile(p.url)
-
-            # Si le profil est incomplet ou pour mettre à jour les infos
-            # Le besoin dit : "Une fois le changement de la page effectué, et le parsing des données réalisé"
-            # Donc on extrait toujours.
-            infos = await self.parser.extract_main_profile(self.browser.page, p.url)
+            # Utilisation du service abstrait pour récupérer les données
+            infos = await self.browser.get_profile_data(p.url)
             self.workflow.update_current_person_info(infos)
 
             # Mise à jour finale de l'UI avec les nouvelles données
@@ -317,14 +313,7 @@ class MainWindow(QMainWindow):
         # On définit une coroutine locale qui va faire le travail et mettre à jour le dialog
         async def load_relations():
             try:
-                await self.browser.open_show_all_modal()
-                suggestions = await self.parser.extract_modal_suggestions(self.browser.page)
-                
-                # Fermeture modale LinkedIn
-                try:
-                    await self.browser.page.click('button[aria-label="Dismiss"]', timeout=2000)
-                except:
-                    pass
+                suggestions = await self.browser.get_relations()
                 
                 # Mise à jour du dialog
                 dialog.update_suggestions(suggestions)

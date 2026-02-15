@@ -4,8 +4,7 @@ import yaml
 import qasync
 from PyQt6.QtWidgets import QApplication
 
-from app.scraper.browser import LinkedInBrowser
-from app.scraper.parsers import LinkedInParser
+from app.core.browser_service import RealBrowserService, MockBrowserService
 from app.gui.main_window import MainWindow
 
 from app.core.services import WorkflowManager
@@ -27,20 +26,25 @@ async def run_app():
     # Chargement des données existantes (Liste "Analysé intéressante")
     workflow.load_initial_data()
 
-    # Initialisation technique (Scraper)
-    browser = LinkedInBrowser(headless=config['settings']['headless'])
-    await browser.start()
+    # Initialisation technique (Browser Service)
+    if config['settings'].get('mock', False):
+        print("Démarrage en mode MOCK")
+        browser_service = MockBrowserService()
+    else:
+        print("Démarrage en mode PLAYWRIGHT")
+        browser_service = RealBrowserService(headless=config['settings']['headless'])
+
+    await browser_service.start()
     
     try:
-        # Connexion manuelle
-        await browser.login_manual()
+        # Connexion (manuelle ou mock)
+        await browser_service.login_manual()
 
         # Initialisation IHM
-        parser = LinkedInParser()
-        window = MainWindow(workflow, browser, parser, config)
+        window = MainWindow(workflow, browser_service, config)
         
         # Si le navigateur est fermé, on ferme l'application (la fenêtre principale)
-        browser.set_on_close_callback(window.close)
+        browser_service.set_on_close_callback(window.close)
         
         window.show()
         
@@ -48,7 +52,7 @@ async def run_app():
     except Exception as e:
         # En cas d'erreur pendant l'initialisation (ex: fermeture prématurée du navigateur),
         # on s'assure de tout arrêter proprement ici car le main ne pourra pas le faire via 'window'
-        await browser.stop()
+        await browser_service.stop()
         raise e
 
 if __name__ == "__main__":

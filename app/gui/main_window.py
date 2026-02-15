@@ -73,6 +73,10 @@ class MainWindow(QMainWindow):
         self.edit_titre = QLineEdit()
         self.edit_region = QLineEdit()
         self.edit_societe = QLineEdit()
+        self.edit_nom.editingFinished.connect(self._on_field_changed)
+        self.edit_titre.editingFinished.connect(self._on_field_changed)
+        self.edit_region.editingFinished.connect(self._on_field_changed)
+        self.edit_societe.editingFinished.connect(self._on_field_changed)
         self.edit_url = QLineEdit()
         self.edit_url.setReadOnly(True)
 
@@ -113,6 +117,34 @@ class MainWindow(QMainWindow):
         print("L'utilisateur a fermé la fenêtre principale.")
         event.accept()
 
+    def _on_field_changed(self):
+        """Appelé quand un champ texte perd le focus après modification."""
+        if not self.workflow.current_person:
+            return
+
+        # Mise à jour du modèle avec les valeurs du formulaire
+        info = {
+            'nom': self.edit_nom.text(),
+            'titre': self.edit_titre.text(),
+            'lieu': self.edit_region.text(),
+            'societe': self.edit_societe.text()
+        }
+        
+        # On met à jour les infos SANS sauvegarder automatiquement (car interesting va passer à False)
+        # Mais pour cela on doit modifier directement les attributs ou utiliser une méthode dédiée
+        # qui ne déclenche pas le save si interesting est déjà vrai.
+        # Ici on veut FORCER la revalidation, donc on passe interesting à False.
+        
+        # 1. Mise à jour des données
+        self.workflow.update_current_person_info(info)
+        
+        # 2. Reset de l'état "Intéressante" => False
+        # Cela force l'utilisateur à recocher pour sauvegarder
+        self.chk_interest.setChecked(False)
+        self.workflow.set_current_person_decision(False)
+        
+        self.refresh_table()
+
     def _set_detail_enabled(self, enabled: bool):
         self.chk_interest.setEnabled(enabled)
         self.edit_nom.setEnabled(enabled)
@@ -137,7 +169,7 @@ class MainWindow(QMainWindow):
             self.table.setItem(i, 2, QTableWidgetItem(p.lieu or ""))
             self.table.setItem(i, 3, QTableWidgetItem(p.societe or ""))
             
-            interet_str = "OUI" if p.est_interressante else "NON"
+            interet_str = "OUI" if p.interesting else "NON"
             self.table.setItem(i, 4, QTableWidgetItem(interet_str))
             
             # Styling
@@ -173,7 +205,7 @@ class MainWindow(QMainWindow):
                     item.setData(Qt.ItemDataRole.UserRole, p.url)
         
         # Mise à jour de l'état du bouton "Personne suivante"
-        self.btn_next.setEnabled(bool(self.workflow.queue))
+        self.btn_next.setEnabled(self.workflow.has_pending_persons())
 
     def _update_detail_view(self):
         p = self.workflow.current_person
@@ -193,7 +225,7 @@ class MainWindow(QMainWindow):
         self.edit_region.setText(p.lieu or "")
         self.edit_societe.setText(p.societe or "")
         self.edit_url.setText(p.url)
-        self.chk_interest.setChecked(p.est_interressante)
+        self.chk_interest.setChecked(p.interesting)
 
     def _show_add_dialog(self) -> None:
         dialog = AddProfileDialog(self)
@@ -256,13 +288,11 @@ class MainWindow(QMainWindow):
 
     @qasync.asyncSlot()
     async def process_next(self):
-        if not self.workflow.queue:
-            QMessageBox.information(self, "Info", "Plus de personnes à traiter dans la file.")
-            return
-
         p = self.workflow.get_next_person()
         if p:
             self._select_person(p)
+        else:
+            QMessageBox.information(self, "Info", "Plus de personnes à traiter dans la file.")
 
     @qasync.asyncSlot()
     async def _open_relations_dialog(self):

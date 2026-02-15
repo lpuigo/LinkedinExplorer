@@ -59,11 +59,11 @@ class ExcelRepository(PersonRepository):
             return []
 
     def save_person(self, p: Personne) -> None:
-        """Ajoute une personne au fichier Excel de manière durable."""
-        if not p.est_interressante:
+        """Ajoute ou met à jour une personne dans le fichier Excel."""
+        if not p.interesting:
             return  # On ne sauvegarde que les intéressants
 
-        new_data = {
+        new_row = {
             "Nom": p.nom,
             "Titre": p.titre,
             "Société": p.societe,
@@ -71,31 +71,30 @@ class ExcelRepository(PersonRepository):
             "Lien Linkedin": p.url,
             "Source": p.source_url
         }
-        df_new = pd.DataFrame([new_data], columns=self.COLUMNS)
-
+        
         try:
             if os.path.exists(self.file_path):
-                # Mode append avec openpyxl pour ne pas tout écraser
-                with pd.ExcelWriter(self.file_path, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
-                    # On charge pour trouver la dernière ligne ? 
-                    # Pandas append directement est plus simple si on recharge tout, 
-                    # mais pour la perf on va append.
-                    # Simplification: on relit pour éviter doublons et on réécrit (plus sûr pour petit volume < 1000)
-                    df_existing = pd.read_excel(self.file_path)
-                    
-                    # Vérif doublon URL
-                    if p.url in df_existing["Lien Linkedin"].values:
-                        # Update (suppression ancienne ligne + ajout nouvelle à la fin)
-                        df_existing = df_existing[df_existing["Lien Linkedin"] != p.url]
-                    
-                    df_final = pd.concat([df_existing, df_new], ignore_index=True)
-                    df_final.to_excel(self.file_path, index=False)
+                df_existing = pd.read_excel(self.file_path)
             else:
-                df_new.to_excel(self.file_path, index=False)
+                df_existing = pd.DataFrame(columns=self.COLUMNS)
+                
+            # Conversion en DataFrame pour la nouvelle ligne
+            df_new = pd.DataFrame([new_row])
+            
+            # Si l'URL existe déjà, on supprime l'ancienne entrée pour la remplacer
+            if "Lien Linkedin" in df_existing.columns and not df_existing.empty:
+                 if p.url in df_existing["Lien Linkedin"].values:
+                     df_existing = df_existing[df_existing["Lien Linkedin"] != p.url]
+            
+            # Concaténation
+            df_final = pd.concat([df_existing, df_new], ignore_index=True)
+            
+            # Sauvegarde
+            with pd.ExcelWriter(self.file_path, engine='openpyxl', mode='w') as writer:
+                df_final.to_excel(writer, index=False)
                 
         except Exception as e:
             print(f"Erreur sauvegarde Excel: {e}")
-            # Fallback ou raise selon besoin
 
     def remove_person(self, p: Personne) -> None:
         """Supprime une personne du fichier Excel."""
@@ -109,3 +108,30 @@ class ExcelRepository(PersonRepository):
                 df.to_excel(self.file_path, index=False)
         except Exception as e:
             print(f"Erreur suppression Excel: {e}")
+
+    def exists(self) -> bool:
+        """Vérifie si le fichier Excel existe."""
+        return os.path.exists(self.file_path)
+
+    def save_all(self, persons: List[Personne]) -> None:
+        """Recrée le fichier Excel avec la liste complète des personnes fournies."""
+        data = []
+        for p in persons:
+            if not p.interesting:
+                continue
+                
+            data.append({
+                "Nom": p.nom,
+                "Titre": p.titre,
+                "Société": p.societe,
+                "Région": p.lieu,
+                "Lien Linkedin": p.url,
+                "Source": p.source_url
+            })
+            
+        df = pd.DataFrame(data, columns=self.COLUMNS)
+        try:
+            # On écrase tout le fichier
+            df.to_excel(self.file_path, index=False)
+        except Exception as e:
+            print(f"Erreur recréation Excel: {e}")

@@ -49,13 +49,32 @@ class WorkflowManager:
         return p
 
     def get_next_person(self) -> Optional[Personne]:
-        """Récupère la prochaine personne à traiter."""
-        if not self.queue:
-            return None
-        
-        self.current_person = self.queue.popleft()
-        # self.current_person.analyzed = True # On pourrait marquer analysé ici ?
-        return self.current_person
+        """Récupère la prochaine personne à traiter (première non analysée)."""
+        # On parcourt toutes les personnes. Comme c'est un dict (Python 3.7+), l'ordre d'insertion est préservé.
+        # Les personnes chargées sont déjà marquées 'analyzed', donc on tombera sur les nouvelles.
+        for p in self.all_persons.values():
+            if not p.analyzed:
+                # Note: On ne définit pas forcément current_person ici, c'est fait par l'appelant via _select_person
+                # mais pour cohérence on peut le faire.
+                self.current_person = p
+                return p
+        return None
+
+    def has_pending_persons(self) -> bool:
+        """Vérifie s'il reste des personnes non analysées."""
+        for p in self.all_persons.values():
+            if not p.analyzed:
+                return True
+        return False
+
+    def _ensure_storage_integrity(self) -> bool:
+        """Vérifie si le stockage existe, sinon le recrée avec toutes les données en mémoire.
+        Retourne True si une restauration complète a été effectuée."""
+        if not self.repository.exists():
+            print("Fichier de stockage manquant, recréation...")
+            self.repository.save_all(list(self.all_persons.values()))
+            return True
+        return False
 
     def set_current_person_decision(self, is_interesting: bool):
         """Valide la décision pour la personne en cours."""
@@ -65,6 +84,10 @@ class WorkflowManager:
         self.current_person.analyzed = True
         self.current_person.interesting = is_interesting
         
+        # Si le fichier n'existe plus, on le recrée completement avec le nouvel état
+        if self._ensure_storage_integrity():
+            return
+
         if is_interesting:
             self.repository.save_person(self.current_person)
         else:
@@ -79,3 +102,9 @@ class WorkflowManager:
         if 'titre' in info: self.current_person.titre = info['titre']
         if 'societe' in info: self.current_person.societe = info['societe']
         if 'lieu' in info: self.current_person.lieu = info['lieu']
+        
+        # Si la personne était déjà marquée comme intéressante, on met à jour le fichier
+        if self.current_person.interesting:
+             if self._ensure_storage_integrity():
+                 return
+             self.repository.save_person(self.current_person)

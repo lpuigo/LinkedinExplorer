@@ -14,12 +14,6 @@ class Personne:
     analyzed: bool = False
     interesting: bool = False
     
-    # Pour l'affichage et la logique métier, on déduit l'intérêt du statut
-    @property
-    def est_interressante(self) -> bool:
-        """Indique si la personne a été qualifiée comme intéressante."""
-        return self.interesting
-
     def __hash__(self):
         return hash(self.url)
 

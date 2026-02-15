@@ -15,9 +15,15 @@ class LinkedInBrowser:
     async def start(self):
         """Lance l'instance du navigateur Playwright."""
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(headless=self.headless)
+        self.browser = await self.playwright.chromium.launch(
+            headless=self.headless
+        )
         self.browser.on("disconnected", lambda b: self._on_disconnected())
-        self.context = await self.browser.new_context()
+        
+        # Le viewport=None sans start-maximized permet de démarrer avec une fenêtre standard
+        # mais redimensionnable dynamiquement par l'utilisateur
+        self.context = await self.browser.new_context(no_viewport=True)
+        
         self.page = await self.context.new_page()
 
     def set_on_close_callback(self, callback):

@@ -1,0 +1,29 @@
+
+
+https://www.linkedin.com/in/jean-francois-vanzynghel/
+
+
+>
+Feature : Fenetre "Valider les nouvelles relations" : quand l'utilisateur change la largeure de la fenetre, il faut que les colonnes Noms et A Analyser garde leurs largeurs respectives, mais la largeur de la colonne "Titre" change pour que la table prenne toujours la lageur de la fenetre (en tenant compte des marges) 
+
+>
+Feature : Fenetre principale, partie de gauche, mettre sur la meme ligne que le bouton "Ajouter un profil" des compteurs qui indique :
+- NB "Profils" (le nombre total de personne dans la table)
+- NB "PoI" (Nombre de personne marquée comme interessante)
+- NB "A analyser" (Nombre de personne restant a analyser)
+Ces compteurs sont raffraichis chaque fois que la table est raffraichie
+Pour l'affichage, il faut une ligne qui contient les 3 compteurs, avec leur label, et enfin le bouton "Ajouter un profil"
+
+>
+Feature : Fenetre principale, modifier la gestion de la partie de gauche (liste des personnes) et la partir de droite (détail de la personne en cours d'analyse):
+- la largeur de la partie de droite doit rester fixe quand l'utilisateur chage la largeur de la fenetre principale
+- Ajouter un séparateur entre les deux parties, qui permet à l'utilisateur de faire varier comment les 2 parties se répartissent la largeur de la fenetre.
+
+> 
+Fix : Fenetre principale, partie de droite, quand l'utilisateur clique sur le bouton "Personne suivante", il faut changer la personne en cours d'analyse en choisissant la premiere personne "a analyser" dans la liste des personnes (ce bouton identifie la prochaine personne a analyser, puis provoque le meme effet que si l'utilisateur avait cliqué sur la ligne correspondante a la prochaine personne a analyser dans la table des personnes (partie de gauche)
+
+>
+Ajouter à la classe personne un attribut (String) "Commentaire". Ajouter un champ dans le formulaire pour l'édition de la personne en cours d'analyse, en dessous du champ "Société". Ce champs doit également être ajouté au tableau XLSx (une nouvelle colonne, entre "Région" et "Lien LinkedIn"). Ajouter la gestion de ce champs dans toute les méthodes liées au fichier XLSx (chargement du tableau, formatage et mise a jour des données).
+
+>
+Fenetre principale : quand l'utilisateur à appuyé sur le bouton "Relations ..." et que la fenetre fille "Valider les nouvelles relations" apparait, il faut que le bouton "Relations ..." soit désactivé. Ceci empeche le l'utilisateur n'ouvre une nouvelle fois cette fenetre. Le bouton "Relations ..." est a nouveau actif dès que la fenetre fille "Valider les nouvelles relations" est fermée.

@@ -18,3 +18,13 @@ class PersonRepository(ABC):
     def remove_person(self, person: Personne) -> None:
         """Supprime une personne du stockage."""
         pass
+
+    @abstractmethod
+    def exists(self) -> bool:
+        """Vérifie si le support de stockage existe."""
+        pass
+
+    @abstractmethod
+    def save_all(self, persons: List[Personne]) -> None:
+        """Sauvegarde une liste complète de personnes."""
+        pass

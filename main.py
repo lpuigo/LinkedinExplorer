@@ -31,15 +31,25 @@ async def run_app():
     browser = LinkedInBrowser(headless=config['settings']['headless'])
     await browser.start()
     
-    # Connexion manuelle
-    await browser.login_manual()
+    try:
+        # Connexion manuelle
+        await browser.login_manual()
 
-    # Initialisation IHM
-    parser = LinkedInParser()
-    window = MainWindow(workflow, browser, parser, config)
-    window.show()
-    
-    return window
+        # Initialisation IHM
+        parser = LinkedInParser()
+        window = MainWindow(workflow, browser, parser, config)
+        
+        # Si le navigateur est fermé, on ferme l'application (la fenêtre principale)
+        browser.set_on_close_callback(window.close)
+        
+        window.show()
+        
+        return window
+    except Exception as e:
+        # En cas d'erreur pendant l'initialisation (ex: fermeture prématurée du navigateur),
+        # on s'assure de tout arrêter proprement ici car le main ne pourra pas le faire via 'window'
+        await browser.stop()
+        raise e
 
 if __name__ == "__main__":
     try:
@@ -47,13 +57,37 @@ if __name__ == "__main__":
         loop = qasync.QEventLoop(app)
         asyncio.set_event_loop(loop)
         
+        window = None
+        
         with loop:
-            # On lance l'initialisation asynchrone (attente de start browser, login...)
-            # On récupère la fenêtre pour éviter qu'elle soit garbage collected
-            window = loop.run_until_complete(run_app())
-            
-            # Une fois l'init terminée, on lance la boucle d'événements Qt infinie
-            loop.run_forever()
+            try:
+                # On lance l'initialisation asynchrone (attente de start browser, login...)
+                # On récupère la fenêtre pour éviter qu'elle soit garbage collected
+                window = loop.run_until_complete(run_app())
+                
+                # Une fois l'init terminée, on lance la boucle d'événements Qt infinie
+                loop.run_forever()
+            except Exception as e:
+                print(f"L'application s'est arrêtée : {e}")
+            finally:
+                # Nettoyage propre à la sortie, même en cas d'erreur
+                if window and window.browser:
+                     print("Arrêt du navigateur lié à la fermeture de l'application...")
+                     try:
+                        loop.run_until_complete(window.browser.stop())
+                     except Exception:
+                         pass
+                
+                # S'assurer que toutes les tâches asynchrones sont terminées
+                # Cela évite "Task was destroyed but it is pending"
+                try:
+                    pending = asyncio.all_tasks(loop)
+                    for task in pending:
+                        task.cancel()
+                    if pending:
+                        loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                except Exception:
+                    pass
             
     except KeyboardInterrupt:
         pass

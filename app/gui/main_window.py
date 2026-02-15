@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPu
                              QTableWidget, QTableWidgetItem, QLabel, QLineEdit, QCheckBox, QSplitter,
                              QFormLayout, QFrame, QHeaderView, QAbstractItemView, QDialog)
 from PyQt6.QtCore import Qt, pyqtSlot
-from PyQt6.QtGui import QColor, QBrush, QFont
+from PyQt6.QtGui import QColor, QBrush, QFont, QCloseEvent
 
 from app.gui.dialogs import AddProfileDialog
 from app.core.services import WorkflowManager
@@ -107,6 +107,11 @@ class MainWindow(QMainWindow):
         
         # Désactiver les contrôles de droite si pas de personne en cours
         self._set_detail_enabled(False)
+
+    def closeEvent(self, event: QCloseEvent):
+        """Détecte la fermeture explicite de la fenêtre par l'utilisateur."""
+        print("L'utilisateur a fermé la fenêtre principale.")
+        event.accept()
 
     def _set_detail_enabled(self, enabled: bool):
         self.chk_interest.setEnabled(enabled)
